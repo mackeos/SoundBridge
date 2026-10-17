@@ -30,44 +30,96 @@ public partial class App : Application
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
+        BootLog.Step($"App starting v{typeof(App).Assembly.GetName().Version} — " +
+            $"{Environment.OSVersion.VersionString}, {(Environment.Is64BitProcess ? "64" : "32")}-bit process");
+
+        // Fatal-error surfacing: without these hooks, a WinUI app that throws
+        // before its first window shows simply vanishes ("nothing happens").
+        AppDomain.CurrentDomain.UnhandledException += (_, e) =>
+        {
+            var ex = e.ExceptionObject as Exception;
+            BootLog.Fatal(ex, e.IsTerminating
+                ? "AppDomain.UnhandledException (terminating)"
+                : "AppDomain.UnhandledException");
+            BootLog.ShowFatalDialog(ex?.Message ?? "Unknown fatal error.");
+        };
+        TaskScheduler.UnobservedTaskException += (_, e) =>
+        {
+            BootLog.Step($"Unobserved task exception: {e.Exception.Message}");
+            e.SetObserved();
+        };
+        this.UnhandledException += (_, e) =>
+        {
+            BootLog.Fatal(e.Exception, "UI thread unhandled exception");
+            BootLog.ShowFatalDialog(e.Message);
+            e.Handled = true; // keep the tray app alive; the error is on record
+        };
+
         // Single instance: a second launch (e.g. clicking the autostart entry
         // while running) must not spawn a second tray icon.
         _singleInstanceMutex = new Mutex(true, @"Local\SoundBridge.SingleInstance", out var createdNew);
         if (!createdNew)
         {
+            BootLog.Step("Another instance is already running — exiting.");
             ExitApplication();
             return;
         }
 
-        UiDispatcher = DispatcherQueue.GetForCurrentThread();
-
-        var startMinimizedByArg = HasStartMinimizedArg();
-        var settings = SettingsService.Load();
-        ApplyTheme(settings.Theme);
-
-        BluetoothService = new A2dpSinkService();
-
-        // Window first (the tray service marshals notifications through its
-        // dispatcher queue), then tray, then the reconnect watchdog.
-        MainWindow = new MainWindow();
-        TrayService = new TrayService(this);
-        TrayService.Initialize();
-
-        ReconnectService = new ReconnectService(BluetoothService, SettingsService, () => TrayService);
-        ReconnectService.Start();
-
-        // Event-driven reconnect: route connection lifecycle into the watchdog.
-        // Drops of favorite devices trigger an immediate retry burst; manual
-        // disconnects are suppressed by MainWindow before they happen.
-        BluetoothService.ConnectionStateChanged += OnBluetoothConnectionStateChanged;
-
-        if (startMinimizedByArg || settings.StartMinimized)
+        try
         {
-            // Stay in the tray; the user can open the window from the tray icon.
+            UiDispatcher = DispatcherQueue.GetForCurrentThread();
+            BootLog.Step("Dispatcher captured");
+
+            var startMinimizedByArg = HasStartMinimizedArg();
+            var settings = SettingsService.Load();
+            ApplyTheme(settings.Theme);
+            BootLog.Step("Settings loaded");
+
+            BluetoothService = new A2dpSinkService();
+            BootLog.Step("Bluetooth service created");
+
+            // Window first (the tray service marshals notifications through its
+            // dispatcher queue), then tray, then the reconnect watchdog.
+            MainWindow = new MainWindow();
+            BootLog.Step("Main window created");
+
+            try
+            {
+                TrayService = new TrayService(this);
+                TrayService.Initialize();
+                BootLog.Step("Tray icon created");
+            }
+            catch (Exception trayEx)
+            {
+                // The window is more important than the tray: keep going.
+                BootLog.Fatal(trayEx, "Tray initialization failed (continuing)");
+            }
+
+            ReconnectService = new ReconnectService(BluetoothService, SettingsService, () => TrayService);
+            ReconnectService.Start();
+            BootLog.Step("Reconnect watchdog started");
+
+            // Event-driven reconnect: route connection lifecycle into the watchdog.
+            // Drops of favorite devices trigger an immediate retry burst; manual
+            // disconnects are suppressed by MainWindow before they happen.
+            BluetoothService.ConnectionStateChanged += OnBluetoothConnectionStateChanged;
+
+            if (startMinimizedByArg || settings.StartMinimized)
+            {
+                BootLog.Step("Ready — starting minimized to tray");
+            }
+            else
+            {
+                ShowMainWindow();
+                BootLog.Step("Ready — main window shown");
+            }
         }
-        else
+        catch (Exception ex)
         {
-            ShowMainWindow();
+            BootLog.Fatal(ex, "Startup failed");
+            BootLog.ShowFatalDialog(
+                $"SoundBridge failed to start.\n\n{ex.GetType().Name}: {ex.Message}");
+            Environment.Exit(1);
         }
     }
 
@@ -143,9 +195,9 @@ public partial class App : Application
             BluetoothService?.DisconnectAll();
             TrayService?.Dispose();
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // Shutdown is best effort.
+            BootLog.Step($"Shutdown cleanup error (ignored): {ex.Message}");
         }
 
         Environment.Exit(0);

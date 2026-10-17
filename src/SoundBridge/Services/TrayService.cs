@@ -35,9 +35,10 @@ public sealed class TrayService : IDisposable
             _icon.IconSource = new Microsoft.UI.Xaml.Media.Imaging.BitmapImage(
                 new Uri("ms-appx:///Assets/app.ico"));
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             // Icon decoding failed; the tooltip and menu still work.
+            BootLog.Step($"Tray icon bitmap decode failed (continuing): {ex.Message}");
         }
 
         _icon.LeftClickCommand = new RelayCommand(() => _app.ShowMainWindow());
@@ -46,7 +47,16 @@ public sealed class TrayService : IDisposable
         // The icon is not hosted in a XAML visual tree, so it never reaches the
         // Loaded path - create the native tray icon explicitly, exactly like
         // the official H.NotifyIcon Windowless sample does.
-        _icon.ForceCreate();
+        try
+        {
+            _icon.ForceCreate();
+        }
+        catch (Exception ex)
+        {
+            // Shell may be momentarily unavailable or the icon source unusable;
+            // the main window must still come up. App logs the failure.
+            BootLog.Fatal(ex, "Tray ForceCreate failed (continuing)");
+        }
     }
 
     private void BuildContextMenu()
