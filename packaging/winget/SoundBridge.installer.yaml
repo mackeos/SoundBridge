@@ -1,0 +1,22 @@
+# Winget manifest: installer
+# Replace every ALL-CAPS placeholder before submitting (see docs/winget-submission.md).
+PackageIdentifier: YOURGITHUBHANDLE.SoundBridge
+PackageVersion: 0.1.0
+Platform:
+  - Windows.Desktop
+MinimumOSVersion: 10.0.19041.0
+InstallerType: zip
+NestedInstallerType: portable
+NestedInstallerFiles:
+  - RelativeFilePath: SoundBridge.exe
+    PortableCommandAlias: soundbridge
+Installers:
+  - Architecture: x64
+    InstallerUrl: https://github.com/YOURGITHUBHANDLE/SoundBridge/releases/download/v0.1.0/SoundBridge-0.1.0-win-x64.zip
+    InstallerSha256: PASTE_SHA256_OF_ZIP_HERE
+  - Architecture: arm64
+    InstallerUrl: https://github.com/YOURGITHUBHANDLE/SoundBridge/releases/download/v0.1.0/SoundBridge-0.1.0-win-arm64.zip
+    InstallerSha256: PASTE_SHA256_OF_ZIP_HERE
+PackageFamilyName: YOURGITHUBHANDLE.SoundBridge
+ManifestType: installer
+ManifestVersion: 1.6.0

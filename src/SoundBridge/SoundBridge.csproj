@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    <RootNamespace>SoundBridge</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <UseWinUI>true</UseWinUI>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+
+    <!-- WinUI 3 / Windows App SDK: unpackaged, self-contained deployment.
+         Ships the Windows App SDK runtime next to the exe - no runtime install needed. -->
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <Platforms>x86;x64;ARM64</Platforms>
+    <RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
+    <UseRidGraph>true</UseRidGraph>
+
+    <DefaultLanguage>en-US</DefaultLanguage>
+    <Version>0.1.0</Version>
+    <AssemblyTitle>SoundBridge</AssemblyTitle>
+    <Product>SoundBridge</Product>
+    <Company>SoundBridge contributors</Company>
+    <Copyright>Copyright (c) 2026 SoundBridge contributors</Copyright>
+    <Description>Modern Bluetooth A2DP Sink manager for Windows 10 2004+ - receive audio from your phone with a beautiful Fluent UI.</Description>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.6.250108002" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1742" />
+    <!-- Tray (notification area) icon support -->
+    <PackageReference Include="H.NotifyIcon.WinUI" Version="2.3.0" />
+    <!-- ObservableObject / ObservableProperty source generators -->
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
+    <!-- Registry access for the auto-start (Run key) feature -->
+    <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\app.ico" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

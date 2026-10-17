@@ -1,0 +1,63 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Release ${{ github.ref_name }}
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Compute version from tag
+        id: ver
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}" -replace '^v', ''
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Publish x64 (self-contained)
+        run: >
+          dotnet publish src/SoundBridge -c Release -r win-x64 --self-contained true
+          -p:Platform=x64 -p:Version=${{ steps.ver.outputs.version }} -o dist/x64
+
+      - name: Publish ARM64 (self-contained)
+        run: >
+          dotnet publish src/SoundBridge -c Release -r win-arm64 --self-contained true
+          -p:Platform=ARM64 -p:Version=${{ steps.ver.outputs.version }} -o dist/arm64
+
+      - name: Zip artifacts
+        shell: pwsh
+        run: |
+          Compress-Archive -Path dist/x64/* -DestinationPath dist/SoundBridge-${{ steps.ver.outputs.version }}-win-x64.zip
+          Compress-Archive -Path dist/arm64/* -DestinationPath dist/SoundBridge-${{ steps.ver.outputs.version }}-win-arm64.zip
+          Get-ChildItem dist | Format-Table
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: SoundBridge ${{ github.ref_name }}
+          body: |
+            Self-contained builds — no .NET or Windows App SDK install required.
+
+            | File | For |
+            |---|---|
+            | `SoundBridge-${{ steps.ver.outputs.version }}-win-x64.zip` | most PCs (Intel/AMD) |
+            | `SoundBridge-${{ steps.ver.outputs.version }}-win-arm64.zip` | ARM / Snapdragon laptops |
+
+            Unzip anywhere and run `SoundBridge.exe`.
+          files: |
+            dist/*.zip
+          fail_on_unmatched_files: true

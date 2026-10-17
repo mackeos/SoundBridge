@@ -1,0 +1,27 @@
+# Winget manifest: default locale
+PackageIdentifier: YOURGITHUBHANDLE.SoundBridge
+PackageVersion: 0.1.0
+PackageLocale: en-US
+Publisher: YOURGITHUBHANDLE
+PublisherUrl: https://github.com/YOURGITHUBHANDLE
+PublisherSupportUrl: https://github.com/YOURGITHUBHANDLE/SoundBridge/issues
+PackageName: SoundBridge
+PackageUrl: https://github.com/YOURGITHUBHANDLE/SoundBridge
+ShortDescription: Turn your Windows PC into a Bluetooth speaker for your phone.
+Description: |-
+  SoundBridge is a modern Bluetooth A2DP Sink manager for Windows 10 2004+.
+  Pair your phone, click once, and your PC plays whatever your phone plays.
+  Includes a Fluent dashboard, start-with-Windows, auto-reconnect favorites
+  and a tray-first experience. Open-source rewrite of AudioPlaybackConnector.
+Moniker: soundbridge
+Tags:
+  - bluetooth
+  - a2dp
+  - audio
+  - sink
+  - windows
+License: MIT
+LicenseUrl: https://github.com/YOURGITHUBHANDLE/SoundBridge/blob/main/LICENSE
+Copyright: Copyright (c) 2026 SoundBridge contributors
+ManifestType: defaultLocale
+ManifestVersion: 1.6.0

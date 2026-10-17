@@ -1,0 +1,7 @@
+# Winget manifest: version
+# Place all three files in:  manifests/<P>/<Publisher>/<Package>/<Version>/
+PackageIdentifier: YOURGITHUBHANDLE.SoundBridge
+PackageVersion: 0.1.0
+DefaultLocale: en-US
+ManifestType: version
+ManifestVersion: 1.6.0
