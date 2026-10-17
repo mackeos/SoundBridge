@@ -1,4 +1,5 @@
 using Microsoft.UI.Dispatching;
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using SoundBridge.Models;
 using SoundBridge.Services;
@@ -90,17 +91,22 @@ public partial class App : Application
             return;
         }
 
-        if (!window.AppWindow.IsVisible)
+        var appWindow = window.AppWindow;
+        if (!appWindow.IsVisible)
         {
-            window.AppWindow.Show();
+            appWindow.Show();
         }
 
-        if (window.AppWindow.IsMinimized)
+        // AppWindow has no IsMinimized/Restore members: minimize state lives on
+        // the OverlappedPresenter (OverlappedPresenterState.Minimized).
+        if (appWindow.Presenter is OverlappedPresenter presenter &&
+            presenter.State == OverlappedPresenterState.Minimized)
         {
-            window.AppWindow.Restore();
+            presenter.Restore(true);
         }
 
         window.Activate();
+        appWindow.MoveInZOrderAtTop(); // bring the window to the foreground
     }
 
     public void HideMainWindow() => MainWindow?.AppWindow?.Hide();

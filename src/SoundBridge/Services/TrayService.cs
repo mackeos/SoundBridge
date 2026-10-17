@@ -1,3 +1,4 @@
+using CommunityToolkit.Mvvm.Input;
 using H.NotifyIcon;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml.Controls;
@@ -20,9 +21,13 @@ public sealed class TrayService : IDisposable
 
     public void Initialize()
     {
+        // H.NotifyIcon's WinUI TaskbarIcon has no mouse events: left-click goes
+        // through LeftClickCommand and the context menu through ContextFlyout.
         _icon = new TaskbarIcon
         {
             ToolTipText = "SoundBridge — Bluetooth audio receiver",
+            ContextMenuMode = ContextMenuMode.SecondWindow,
+            NoLeftClickDelay = true,
         };
 
         try
@@ -35,12 +40,22 @@ public sealed class TrayService : IDisposable
             // Icon decoding failed; the tooltip and menu still work.
         }
 
-        _icon.TrayLeftMouseUp += (_, _) => _app.ShowMainWindow();
+        _icon.LeftClickCommand = new RelayCommand(() => _app.ShowMainWindow());
         BuildContextMenu();
+
+        // The icon is not hosted in a XAML visual tree, so it never reaches the
+        // Loaded path - create the native tray icon explicitly, exactly like
+        // the official H.NotifyIcon Windowless sample does.
+        _icon.ForceCreate();
     }
 
     private void BuildContextMenu()
     {
+        if (_icon is null)
+        {
+            return;
+        }
+
         var menu = new MenuFlyout();
 
         menu.Items.Add(MakeItem("Open SoundBridge", () => _app.ShowMainWindow()));
@@ -79,7 +94,9 @@ public sealed class TrayService : IDisposable
             await Launcher.LaunchUriAsync(new Uri("ms-settings:bluetooth"))));
         menu.Items.Add(MakeItem("Exit", _app.ExitApplication));
 
-        _icon.ContextMenu = menu;
+        // FrameworkElement.ContextFlyout (FlyoutBase) - the library shows it on
+        // right-click; SecondWindow mode renders it above the taskbar.
+        _icon.ContextFlyout = menu;
     }
 
     private static MenuFlyoutItem MakeItem(string text, Action action)

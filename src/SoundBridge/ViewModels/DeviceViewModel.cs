@@ -11,13 +11,13 @@ namespace SoundBridge.ViewModels;
 public partial class DeviceViewModel : ObservableObject
 {
     private static readonly SolidColorBrush ConnectedBrush =
-        new(Colors.FromArgb(255, 63, 189, 128));    // fluent green
+        new(ColorHelper.FromArgb(255, 63, 189, 128));    // fluent green
 
     private static readonly SolidColorBrush DisconnectedBrush =
-        new(Colors.FromArgb(255, 150, 150, 150));   // neutral gray
+        new(ColorHelper.FromArgb(255, 150, 150, 150));   // neutral gray
 
     private static readonly SolidColorBrush BusyBrush =
-        new(Colors.FromArgb(255, 250, 175, 26));    // amber
+        new(ColorHelper.FromArgb(255, 250, 175, 26));    // amber
 
     public DeviceViewModel(string id, string name)
     {
