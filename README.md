@@ -3,8 +3,7 @@
 **Turn your Windows PC into a Bluetooth speaker for your phone — with a UI that actually feels like Windows 11.**
 
 SoundBridge is a modern, open-source rewrite of
-[AudioPlaybackConnector](https://github.com/ysc3839/AudioPlaybackConnector)
-(a 1.6k-star project that has not shipped a release since September 2020).
+[AudioPlaybackConnector](https://github.com/ysc3839/AudioPlaybackConnector).
 It manages the Bluetooth **A2DP Sink** role that Windows 10 2004+ ships but
 leaves without any first-party UI: pair your phone, click once, and your PC
 plays whatever your phone plays.
