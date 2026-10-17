@@ -1,4 +1,4 @@
-using Windows.Devices.Bluetooth.Audio;
+using Windows.Media.Audio;
 using Windows.Devices.Enumeration;
 
 namespace SoundBridge.Services;
@@ -29,9 +29,13 @@ public sealed class ConnectionStateChangedEventArgs : EventArgs
 ///
 /// This is the direct C# / WinRT equivalent of the connection engine in
 /// ysc3839's AudioPlaybackConnector (MIT): it uses the
-/// Windows.Devices.Bluetooth.Audio.AudioPlaybackConnection API introduced in
+/// Windows.Media.Audio.AudioPlaybackConnection API introduced in
 /// Windows 10 2004 to let this PC act as an A2DP sink (a "Bluetooth speaker")
 /// for a phone or other paired audio source.
+///
+/// Naming note: despite being a Bluetooth feature, the API lives in the
+/// Windows.Media.Audio namespace (the original C++ app includes
+/// winrt/Windows.Media.Audio.h) - there is no Windows.Devices.Bluetooth.Audio.
 ///
 /// Connection flow (identical to the original):
 ///   1. AudioPlaybackConnection.TryCreateFromId(deviceInformationId)
@@ -162,13 +166,15 @@ public sealed class A2dpSinkService
         connection.StateChanged -= OnConnectionStateChanged;
         try
         {
-            connection.Close();
+            // WinRT IClosable.Close() is projected as IDisposable.Dispose() in C#
+            // (the C++ original calls Close() directly). Closing an already-closed
+            // connection is a no-op, so the catch is purely defensive.
+            connection.Dispose();
         }
         catch (Exception)
         {
             // Already closed by the system - nothing to do.
         }
-        connection.Dispose();
 
         ConnectionStateChanged?.Invoke(this, new ConnectionStateChangedEventArgs(deviceId, false));
     }
@@ -220,12 +226,12 @@ public sealed class A2dpSinkService
         connection.StateChanged -= OnConnectionStateChanged;
         try
         {
-            connection.Close();
+            // See Disconnect(): IClosable.Close() == IDisposable.Dispose() in C#.
+            connection.Dispose();
         }
         catch (Exception)
         {
         }
-        connection.Dispose();
     }
 
     private void OnConnectionStateChanged(AudioPlaybackConnection sender, object args)

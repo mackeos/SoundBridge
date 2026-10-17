@@ -31,7 +31,7 @@ from any folder with no installer and no runtime download.
         │                            │
         │      Windows Runtime APIs (Windows SDK 10.0.19041)
         ▼
-Windows.Devices.Bluetooth.Audio.AudioPlaybackConnection
+Windows.Media.Audio.AudioPlaybackConnection
 Windows.Devices.Enumeration.DeviceInformation
 ```
 

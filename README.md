@@ -111,7 +111,7 @@ Settings are stored in `%LOCALAPPDATA%\SoundBridge\settings.json`.
 
 ## How it works
 
-`AudioPlaybackConnection` (WinRT, `Windows.Devices.Bluetooth.Audio`) is the
+`AudioPlaybackConnection` (WinRT, `Windows.Media.Audio`) is the
 2004-era API that turns Windows into an A2DP sink. SoundBridge enumerates
 devices with its AQS selector, then `TryCreateFromId → StartAsync → OpenAsync`
 exactly like the original app — the difference is everything around it.
