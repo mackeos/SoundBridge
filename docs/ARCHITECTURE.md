@@ -1,6 +1,6 @@
 # Architecture
 
-SoundBridge is a single WinUI 3 (Windows App SDK 1.6) desktop app targeting
+SoundBridge is a single WinUI 3 (Windows App SDK 1.8) desktop app targeting
 `net8.0-windows10.0.19041.0`, deployed **unpackaged and self-contained**
 (`WindowsPackageType=None` + `WindowsAppSDKSelfContained=true`): the exe runs
 from any folder with no installer and no runtime download.

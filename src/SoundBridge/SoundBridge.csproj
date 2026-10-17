@@ -31,8 +31,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.6.250108002" />
-    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1742" />
+    <!-- Windows App SDK 1.8: REQUIRED (not cosmetic). 1.6 and older rely on the
+         VS-only "AppxPackage" MSBuild task folder, which dotnet-CLI-only CI
+         (setup-dotnet, no Visual Studio) does not have -> MSB4062 ExpandPriContent
+         (microsoft/WindowsAppSDK#4889). 1.8 ships its own PriGen tasks via the
+         Microsoft.Windows.SDK.BuildTools.MSIX package (net6.0 task dll), so
+         `dotnet publish` works with no Visual Studio installed. -->
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260921001" />
     <!-- Tray (notification area) icon support -->
     <PackageReference Include="H.NotifyIcon.WinUI" Version="2.3.0" />
     <!-- ObservableObject / ObservableProperty source generators -->
