@@ -55,4 +55,27 @@
     <Content Include="Assets\app.ico" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <!-- ===================================================================
+       Publish the app PRI next to the exe (unpackaged WinUI 3 requirement).
+       WasDK generates the app PRI (SoundBridge.pri) into the build output
+       folder ($(TargetDir)), but for unpackaged apps (WindowsPackageType=None)
+       the dotnet-CLI publish pipeline never copies it to the publish
+       directory: the only PRI publish wire-up lives in the MSIX packaging
+       targets and is gated on AppxPackage=='true' (BuildTools.MSIX
+       MrtCore.PriGen.targets Publish target + Pri.targets ProjectPriFile
+       output group). At runtime MRT Core resolves ms-appx:/// URIs (compiled
+       XAML/XBF) through the app PRI found next to the exe; without it the
+       first LoadComponent dies with "XamlParseException: XAML parsing
+       failed." - which is exactly the crash the boot.log captured.
+       =================================================================== -->
+  <Target Name="SoundBridgePublishAppPri" AfterTargets="Publish">
+    <Error Condition="!Exists('$(ProjectPriFullPath)')"
+           Text="App PRI '$(ProjectPriFullPath)' was not generated (TargetDir=$(TargetDir), ProjectPriFileName=$(ProjectPriFileName), AppxGeneratePriEnabled=$(AppxGeneratePriEnabled)). The published exe would crash with XamlParseException at startup." />
+    <Copy SourceFiles="$(ProjectPriFullPath)"
+          DestinationFolder="$(PublishDir)"
+          SkipUnchangedFiles="true" />
+    <Message Importance="high"
+             Text="App PRI published: $(PublishDir)$(ProjectPriFileName)" />
+  </Target>
+
 </Project>
