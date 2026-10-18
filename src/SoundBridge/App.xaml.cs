@@ -78,6 +78,14 @@ public partial class App : Application
             BluetoothService = new A2dpSinkService();
             BootLog.Step("Bluetooth service created");
 
+            // Pre-flight diagnostics before the first XAML load: what got
+            // deployed next to the exe, and whether the WinUI framework
+            // resource pool (control styles, theme brushes) is actually
+            // reachable. If the MainWindow XAML parse below fails, this
+            // section names the broken layer instead of a bare parse error.
+            BootLog.DescribeEnvironment();
+            BootLog.ProbeApplicationResources();
+
             // Window first (the tray service marshals notifications through its
             // dispatcher queue), then tray, then the reconnect watchdog.
             MainWindow = new MainWindow();

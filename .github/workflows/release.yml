@@ -38,6 +38,72 @@ jobs:
           dotnet publish src/SoundBridge -c Release -r win-arm64 --self-contained true
           -p:Platform=ARM64 -p:Version=${{ steps.ver.outputs.version }} -o dist/arm64
 
+      - name: Verify publish output (PRI integrity)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $dirs = @('dist\x64', 'dist\arm64')
+
+          # Hard prerequisites for an unpackaged self-contained WinUI 3 app.
+          # A missing Microsoft.UI.Xaml.Controls.pri means the WinUI control
+          # styles / theme resources are unreachable at runtime -> the first
+          # window dies with XamlParseException ("XAML parsing failed") even
+          # though every build step succeeded.
+          $required = @(
+            'Microsoft.ui.xaml.dll',
+            'Microsoft.UI.Xaml.Controls.pri',
+            'Microsoft.WindowsAppRuntime.dll',
+            'SoundBridge.exe'
+          )
+
+          foreach ($dir in $dirs) {
+            foreach ($file in $required) {
+              if (-not (Test-Path (Join-Path $dir $file))) {
+                throw "Publish output incomplete: '$file' is missing from '$dir'."
+              }
+            }
+
+            # App PRI: unpackaged builds name it after the exe (SoundBridge.pri);
+            # accept the resources.pri convention too.
+            $pris = Get-ChildItem $dir -Filter *.pri
+            $appPri = $pris | Where-Object { $_.Name -eq 'resources.pri' -or $_.Name -like 'SoundBridge*.pri' } | Select-Object -First 1
+            if (-not $appPri) {
+              throw "App PRI not found in '$dir'. PRI files present: $(($pris | Select-Object -ExpandProperty Name) -join ', ')"
+            }
+            Write-Host "App PRI: $($appPri.Name) ($([math]::Round($appPri.Length / 1KB)) KB)"
+          }
+
+          # Prove the compiled window XBF is inside the app PRI. makepri ships
+          # with the Windows SDK on GitHub runners.
+          $makepri = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin" -Recurse -Filter makepri.exe -ErrorAction SilentlyContinue |
+            Sort-Object FullName -Descending | Select-Object -First 1
+
+          if ($makepri) {
+            Write-Host "Using makepri: $($makepri.FullName)"
+            foreach ($dir in $dirs) {
+              $appPri = Get-ChildItem $dir -Filter *.pri |
+                Where-Object { $_.Name -eq 'resources.pri' -or $_.Name -like 'SoundBridge*.pri' } |
+                Select-Object -First 1
+              $dumpName = ($dir -replace '\\|/|:', '_') + '-app-pri-dump.xml'
+              $dump = Join-Path $env:RUNNER_TEMP $dumpName
+              & $makepri.FullName dump /if $appPri.FullName /of $dump /o
+              if ($LASTEXITCODE -ne 0) { throw "makepri dump failed for $($appPri.FullName) (exit $LASTEXITCODE)." }
+              $content = Get-Content $dump -Raw
+              if ($content -notmatch 'MainWindow') {
+                throw "App PRI '$($appPri.Name)' does not contain MainWindow.xaml - the window XBF was not packaged; the exe would fail with XamlParseException."
+              }
+              Write-Host "App PRI contains MainWindow.xaml: OK"
+            }
+          } else {
+            Write-Host "::warning::makepri.exe not found - PRI content dump skipped (file presence checks passed)."
+          }
+
+          foreach ($dir in $dirs) {
+            $files = Get-ChildItem $dir -Recurse -File
+            Write-Host ("'{0}': {1} files, {2:N1} MB total" -f $dir, $files.Count, (($files | Measure-Object Length -Sum).Sum / 1MB))
+            Write-Host ("PRI files: " + ((Get-ChildItem $dir -Filter *.pri | Select-Object -ExpandProperty Name) -join ', '))
+          }
+
       - name: Zip artifacts
         shell: pwsh
         run: |

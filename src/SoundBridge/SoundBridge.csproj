@@ -16,6 +16,11 @@
          Ships the Windows App SDK runtime next to the exe - no runtime install needed. -->
     <WindowsPackageType>None</WindowsPackageType>
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <!-- Release builds strip XBF line info by default, which turns any runtime
+         XamlParseException into a bare "XAML parsing failed." with no
+         [Line: N Position: M] hint - undiagnosable for CI-built artifacts.
+         Keep line info so boot.log can point at the exact XAML element. -->
+    <DisableXbfLineInfo>false</DisableXbfLineInfo>
     <Platforms>x86;x64;ARM64</Platforms>
     <RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
     <UseRidGraph>true</UseRidGraph>
